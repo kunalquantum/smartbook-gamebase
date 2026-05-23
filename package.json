@@ -33,9 +33,11 @@
   "devDependencies": {
     "@react-three/drei": "^10.3.0",
     "@react-three/fiber": "^9.1.2",
+    "@react-three/postprocessing": "^3.0.4",
     "@types/react": "^19.1.6",
     "@types/react-dom": "^19.1.6",
     "@vitejs/plugin-react": "^4.6.0",
+    "postprocessing": "^6.39.1",
     "r3f-perf": "^7.2.3",
     "typescript": "^5.8.3",
     "vite": "^7.0.0"
