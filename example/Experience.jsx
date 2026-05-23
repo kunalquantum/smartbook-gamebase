@@ -12,6 +12,7 @@ import LearningZone from "./LearningZone";
 import SmartbookBridge from "./SmartbookBridge";
 import FloatingNPC from "./FloatingNPC";
 import WorldDecorations from "./WorldDecorations";
+import Animals from "./Animals";
 import { useControls } from "leva";
 import RobotCharacter from "./RobotCharacter";
 import React, { useEffect, useState } from "react";
@@ -85,6 +86,9 @@ export default function Experience() {
 
       {/* ── World decorations (trees, rocks, path stones) ── */}
       <WorldDecorations />
+
+      {/* ── Animals — dogs, cats, birds ── */}
+      <Animals />
 
       {/* ── Floating NPC characters ── */}
 
