@@ -6,10 +6,8 @@ import Lights from "./Lights";
 import Steps from "./Steps";
 import Slopes from "./Slopes";
 import RoughPlane from "./RoughPlane";
-import RigidObjects from "./RigidObjects";
 import FloatingPlatform from "./FloatingPlatform";
 import DynamicPlatforms from "./DynamicPlatforms";
-import ShotCube from "./ShotCube";
 import LearningZone from "./LearningZone";
 import SmartbookBridge from "./SmartbookBridge";
 import { useControls } from "leva";
@@ -17,58 +15,42 @@ import RobotCharacter from "./RobotCharacter";
 import React, { useEffect, useState } from "react";
 
 export default function Experience() {
-  /**
-   * Delay physics activate
-   */
   const [pausedPhysics, setPausedPhysics] = useState(true);
   useEffect(() => {
-    const timeout = setTimeout(() => {
-      setPausedPhysics(false);
-    }, 500);
-
+    const timeout = setTimeout(() => setPausedPhysics(false), 500);
     return () => clearTimeout(timeout);
   }, []);
 
-  /**
-   * Debug settings
-   */
   const { physics, disableControl, disableFollowCam } = useControls("World Settings", {
     physics: false,
     disableControl: false,
     disableFollowCam: false,
   });
 
-  /**
-   * Keyboard control preset
-   */
   const keyboardMap = [
-    { name: "forward", keys: ["ArrowUp", "KeyW"] },
-    { name: "backward", keys: ["ArrowDown", "KeyS"] },
-    { name: "leftward", keys: ["ArrowLeft", "KeyA"] },
-    { name: "rightward", keys: ["ArrowRight", "KeyD"] },
-    { name: "jump", keys: ["Space"] },
-    { name: "run", keys: ["Shift"] },
-    { name: "action1", keys: ["1"] },
-    { name: "action2", keys: ["2"] },
-    { name: "action3", keys: ["3"] },
-    { name: "action4", keys: ["KeyF"] },
+    { name: "forward",   keys: ["ArrowUp",    "KeyW"] },
+    { name: "backward",  keys: ["ArrowDown",   "KeyS"] },
+    { name: "leftward",  keys: ["ArrowLeft",   "KeyA"] },
+    { name: "rightward", keys: ["ArrowRight",  "KeyD"] },
+    { name: "jump",      keys: ["Space"] },
+    { name: "run",       keys: ["Shift"] },
+    { name: "action1",   keys: ["1"] },
+    { name: "action2",   keys: ["2"] },
+    { name: "action3",   keys: ["3"] },
+    { name: "action4",   keys: ["KeyF"] },
   ];
 
   return (
     <>
-      {/* Scene atmosphere */}
       <color attach="background" args={["#a8d0ee"]} />
       <fog attach="fog" args={["#c0dff5", 60, 180]} />
       <Sky sunPosition={[100, 30, 100]} />
 
       <Lights />
-
       <SmartbookBridge />
 
       <Physics debug={physics} timeStep="vary" paused={pausedPhysics}>
-        {/* Keyboard preset */}
         <KeyboardControls map={keyboardMap}>
-          {/* Character Control */}
           <Ecctrl
             animated
             followLight
@@ -85,36 +67,19 @@ export default function Experience() {
           </Ecctrl>
         </KeyboardControls>
 
-        {/* Rough plan */}
         <RoughPlane />
-
-        {/* Slopes and stairs */}
         <Slopes />
-
-        {/* Small steps */}
         <Steps />
-
-        {/* Rigid body objects */}
-        <RigidObjects />
-
-        {/* Floating platform */}
         <FloatingPlatform />
-
-        {/* Dynamic platforms */}
         <DynamicPlatforms />
-
-        {/* Floor */}
         <Floor />
 
-        {/* Shoting cubes */}
-        <ShotCube />
-
-        {/* ── Smartbook Learning Zones — scattered like landmarks ── */}
+        {/* ── Smartbook Learning Zones ── */}
         <LearningZone zoneId="math"    position={[19,  -1,  6]} />
         <LearningZone zoneId="science" position={[-17, -1, -9]} />
         <LearningZone zoneId="reading" position={[5,   -1, 21]} />
         <LearningZone zoneId="history" position={[-8,  -1,-20]} />
-      </Physics >
+      </Physics>
     </>
   );
 }
