@@ -114,11 +114,11 @@ export default function Experience() {
         {/* Shoting cubes */}
         <ShotCube />
 
-        {/* ── Smartbook Learning Zones ── */}
-        <LearningZone zoneId="math"    position={[22,  -1,  0]} />
-        <LearningZone zoneId="science" position={[-22, -1,  0]} />
-        <LearningZone zoneId="reading" position={[0,   -1, 22]} />
-        <LearningZone zoneId="history" position={[0,   -1,-22]} />
+        {/* ── Smartbook Learning Zones — scattered like landmarks ── */}
+        <LearningZone zoneId="math"    position={[19,  -1,  6]} />
+        <LearningZone zoneId="science" position={[-17, -1, -9]} />
+        <LearningZone zoneId="reading" position={[5,   -1, 21]} />
+        <LearningZone zoneId="history" position={[-8,  -1,-20]} />
       </Physics >
     </>
   );
