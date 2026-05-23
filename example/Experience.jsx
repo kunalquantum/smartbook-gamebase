@@ -11,6 +11,7 @@ import RigidObjects from "./RigidObjects";
 import FloatingPlatform from "./FloatingPlatform";
 import DynamicPlatforms from "./DynamicPlatforms";
 import ShotCube from "./ShotCube";
+import LearningZone from "./LearningZone";
 import { useControls } from "leva";
 import CharacterModel from "./CharacterModel";
 import React, { useEffect, useState } from "react";
@@ -112,6 +113,12 @@ export default function Experience() {
 
         {/* Shoting cubes */}
         <ShotCube />
+
+        {/* ── Smartbook Learning Zones ── */}
+        <LearningZone zoneId="math"    position={[22,  -1,  0]} />
+        <LearningZone zoneId="science" position={[-22, -1,  0]} />
+        <LearningZone zoneId="reading" position={[0,   -1, 22]} />
+        <LearningZone zoneId="history" position={[0,   -1,-22]} />
       </Physics >
     </>
   );
