@@ -6,7 +6,6 @@ import {
 import { useEffect, useRef, useMemo } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
-import { Text } from "@react-three/drei";
 
 export default function FloatingPlatform() {
   // Preset
@@ -174,72 +173,45 @@ export default function FloatingPlatform() {
 
   return (
     <>
-      {/* Platform 1 */}
+      {/* Exploration Pad */}
       <RigidBody
         position={[0, 5, -10]}
         mass={1}
         colliders={false}
         ref={floatingPlateRef}
       >
-        <Text
-          scale={0.5}
-          color="black"
-          maxWidth={10}
-          textAlign="center"
-          position={[0, 2.5, 0]}
-        >
-          Floating Platform push to move
-        </Text>
         <CuboidCollider args={[2.5, 0.1, 2.5]} />
         <mesh receiveShadow castShadow>
           <boxGeometry args={[5, 0.2, 5]} />
-          <meshStandardMaterial color={"lightsteelblue"} />
+          <meshStandardMaterial color="#f9a14f" roughness={0.6} />
         </mesh>
       </RigidBody>
 
-      {/* Platform 2 */}
+      {/* Discovery Pad */}
       <RigidBody
         position={[7, 5, -10]}
         mass={1}
         colliders={false}
         ref={floatingPlateRef2}
       >
-        <Text
-          scale={0.5}
-          color="black"
-          maxWidth={10}
-          textAlign="center"
-          position={[0, 2.5, 0]}
-        >
-          Floating Platform push to rotate
-        </Text>
         <CuboidCollider args={[2.5, 0.1, 2.5]} />
         <mesh receiveShadow castShadow>
           <boxGeometry args={[5, 0.2, 5]} />
-          <meshStandardMaterial color={"lightsteelblue"} />
+          <meshStandardMaterial color="#4ecb71" roughness={0.6} />
         </mesh>
       </RigidBody>
 
-      {/* Floating moving Platform test */}
+      {/* Journey Pad — moves side to side */}
       <RigidBody
         position={[0, 5, -17]}
         mass={1}
         colliders={false}
         ref={floatingMovingPlateRef}
       >
-        <Text
-          scale={0.5}
-          color="black"
-          maxWidth={10}
-          textAlign="center"
-          position={[0, 2.5, 0]}
-        >
-          Floating & Moving Platform (rigidbody)
-        </Text>
         <CuboidCollider args={[1.25, 0.1, 1.25]} />
         <mesh receiveShadow castShadow>
           <boxGeometry args={[2.5, 0.2, 2.5]} />
-          <meshStandardMaterial color={"lightsteelblue"} />
+          <meshStandardMaterial color="#c47af9" roughness={0.6} />
         </mesh>
       </RigidBody>
     </>

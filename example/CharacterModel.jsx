@@ -57,9 +57,9 @@ export default function CharacterModel(props) {
   const { mainColor, outlineColor, trailColor } = useControls(
     "Character Model",
     {
-      mainColor: "mediumslateblue",
-      outlineColor: "black",
-      trailColor: "violet",
+      mainColor: "#4a9df8",
+      outlineColor: "#0d0d1e",
+      trailColor: "#82c4ff",
     }
   );
 

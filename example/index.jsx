@@ -6,6 +6,8 @@ import { Leva } from "leva";
 import { EcctrlJoystick } from "../src/EcctrlJoystick";
 import { Suspense, useEffect, useState } from "react";
 import { Bvh } from "@react-three/drei";
+import SmartbookHUD from "./SmartbookHUD";
+import LessonPanel from "./LessonPanel";
 
 const root = ReactDOM.createRoot(document.querySelector("#root"));
 
@@ -30,6 +32,8 @@ const EcctrlJoystickControls = () => {
 root.render(
   <>
     <Leva collapsed />
+    <SmartbookHUD />
+    <LessonPanel />
     <EcctrlJoystickControls />
     <Canvas
       shadows

@@ -1,5 +1,4 @@
-import { Grid, KeyboardControls } from "@react-three/drei";
-import { Perf } from "r3f-perf";
+import { Sky, KeyboardControls } from "@react-three/drei";
 import { Physics } from "@react-three/rapier";
 import Ecctrl from "../src/Ecctrl";
 import Floor from "./Floor";
@@ -11,6 +10,8 @@ import RigidObjects from "./RigidObjects";
 import FloatingPlatform from "./FloatingPlatform";
 import DynamicPlatforms from "./DynamicPlatforms";
 import ShotCube from "./ShotCube";
+import LearningZone from "./LearningZone";
+import SmartbookBridge from "./SmartbookBridge";
 import { useControls } from "leva";
 import CharacterModel from "./CharacterModel";
 import React, { useEffect, useState } from "react";
@@ -55,24 +56,20 @@ export default function Experience() {
 
   return (
     <>
-      <Perf position="top-left" minimal />
-
-      <Grid
-        args={[300, 300]}
-        sectionColor={"lightgray"}
-        cellColor={"gray"}
-        position={[0, -0.99, 0]}
-        userData={{ camExcludeCollision: true }} // this won't be collide by camera ray
-      />
+      {/* Scene atmosphere */}
+      <color attach="background" args={["#a8d0ee"]} />
+      <fog attach="fog" args={["#c0dff5", 60, 180]} />
+      <Sky sunPosition={[100, 30, 100]} />
 
       <Lights />
+
+      <SmartbookBridge />
 
       <Physics debug={physics} timeStep="vary" paused={pausedPhysics}>
         {/* Keyboard preset */}
         <KeyboardControls map={keyboardMap}>
           {/* Character Control */}
           <Ecctrl
-            debug
             animated
             followLight
             springK={2}
@@ -112,6 +109,12 @@ export default function Experience() {
 
         {/* Shoting cubes */}
         <ShotCube />
+
+        {/* ── Smartbook Learning Zones — scattered like landmarks ── */}
+        <LearningZone zoneId="math"    position={[19,  -1,  6]} />
+        <LearningZone zoneId="science" position={[-17, -1, -9]} />
+        <LearningZone zoneId="reading" position={[5,   -1, 21]} />
+        <LearningZone zoneId="history" position={[-8,  -1,-20]} />
       </Physics >
     </>
   );
