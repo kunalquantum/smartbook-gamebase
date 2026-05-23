@@ -13,7 +13,7 @@ import ShotCube from "./ShotCube";
 import LearningZone from "./LearningZone";
 import SmartbookBridge from "./SmartbookBridge";
 import { useControls } from "leva";
-import CharacterModel from "./CharacterModel";
+import RobotCharacter from "./RobotCharacter";
 import React, { useEffect, useState } from "react";
 
 export default function Experience() {
@@ -81,8 +81,7 @@ export default function Experience() {
             disableControl={disableControl}
             disableFollowCam={disableFollowCam}
           >
-            {/* Replace your model here */}
-            <CharacterModel />
+            <RobotCharacter />
           </Ecctrl>
         </KeyboardControls>
 
