@@ -8,6 +8,7 @@ function makeGrassTexture() {
   canvas.width = size;
   canvas.height = size;
   const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
 
   // Base coat
   ctx.fillStyle = "#4a7a3c";
@@ -49,14 +50,17 @@ function makeGrassTexture() {
 }
 
 export default function Floor() {
-  const grassTex = useMemo(() => makeGrassTexture(), []);
+  const grassTex = useMemo(() => {
+    try { return makeGrassTexture(); } catch { return null; }
+  }, []);
 
   return (
     <RigidBody type="fixed">
       <mesh receiveShadow position={[0, -3.5, 0]}>
         <boxGeometry args={[300, 5, 300]} />
         <meshStandardMaterial
-          map={grassTex}
+          map={grassTex || undefined}
+          color="#4a7c3f"
           roughness={0.92}
           metalness={0}
         />

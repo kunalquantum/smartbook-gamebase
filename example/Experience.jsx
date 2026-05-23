@@ -24,7 +24,7 @@ import React, { useEffect, useState } from "react";
 export default function Experience() {
   const [pausedPhysics, setPausedPhysics] = useState(true);
   useEffect(() => {
-    const timeout = setTimeout(() => setPausedPhysics(false), 500);
+    const timeout = setTimeout(() => setPausedPhysics(false), 1200);
     return () => clearTimeout(timeout);
   }, []);
 
