@@ -10,6 +10,10 @@ import FloatingPlatform from "./FloatingPlatform";
 import DynamicPlatforms from "./DynamicPlatforms";
 import LearningZone from "./LearningZone";
 import NewtonsWorldLab from "./NewtonsWorldLab";
+import OpticsLab from "./OpticsLab";
+import OhmsLawLab from "./OhmsLawLab";
+import WavesLab from "./WavesLab";
+import EnergyLab from "./EnergyLab";
 import SmartbookBridge from "./SmartbookBridge";
 import FloatingNPC from "./FloatingNPC";
 import WorldDecorations from "./WorldDecorations";
@@ -84,12 +88,21 @@ export default function Experience() {
         <DynamicPlatforms />
         <Floor />
 
-        {/* ── Learning Zones ── */}
-        <LearningZone zoneId="math"    position={[19,  -1,  6]} />
-        <LearningZone zoneId="science" position={[-17, -1, -9]} />
+        {/* ── Learning Zones — every zone is now a live physics lab ── */}
+        <LearningZone zoneId="newton" position={[-17, -1, -9]} />
         <NewtonsWorldLab position={[-17, -1, -9]} />
-        <LearningZone zoneId="reading" position={[5,   -1, 21]} />
-        <LearningZone zoneId="history" position={[-8,  -1,-20]} />
+
+        <LearningZone zoneId="optics" position={[19, -1, 6]} />
+        <OpticsLab position={[19, -1, 6]} />
+
+        <LearningZone zoneId="ohms" position={[5, -1, 21]} />
+        <OhmsLawLab position={[5, -1, 21]} />
+
+        <LearningZone zoneId="waves" position={[-8, -1, -20]} />
+        <WavesLab position={[-8, -1, -20]} />
+
+        <LearningZone zoneId="energy" position={[22, -1, -16]} />
+        <EnergyLab position={[22, -1, -16]} />
       </Physics>
 
       {/* ── Smartbook state bridge ── */}
@@ -104,17 +117,12 @@ export default function Experience() {
       <WorldDecorations />
       <Animals />
 
-      {/* ── Floating NPC characters ── */}
-      <FloatingNPC center={[19, 0, 6]}   color="#4f9cf9" orbitRadius={5.5} orbitSpeed={0.22} phase={0}   floatHeight={2.2} />
-      <FloatingNPC center={[19, 0, 6]}   color="#4f9cf9" orbitRadius={4.0} orbitSpeed={0.18} phase={2.1} floatHeight={1.7} bodyScale={0.78} />
+      {/* ── Floating NPC characters — one guide per lab, kept minimal ── */}
       <FloatingNPC center={[-17, 0, -9]} color="#4ecb71" orbitRadius={5.0} orbitSpeed={0.25} phase={1.2} floatHeight={2.0} />
-      <FloatingNPC center={[-17, 0, -9]} color="#4ecb71" orbitRadius={3.5} orbitSpeed={0.20} phase={3.8} floatHeight={2.5} bodyScale={0.82} />
+      <FloatingNPC center={[19, 0, 6]}   color="#4f9cf9" orbitRadius={5.5} orbitSpeed={0.22} phase={0}   floatHeight={2.2} />
       <FloatingNPC center={[5, 0, 21]}   color="#f9a14f" orbitRadius={5.5} orbitSpeed={0.20} phase={0.7} floatHeight={1.9} />
-      <FloatingNPC center={[5, 0, 21]}   color="#f9a14f" orbitRadius={4.2} orbitSpeed={0.26} phase={4.5} floatHeight={2.4} bodyScale={0.75} />
-      <FloatingNPC center={[-8, 0, -20]} color="#c47af9" orbitRadius={5.0} orbitSpeed={0.23} phase={2.8} floatHeight={2.1} />
-      <FloatingNPC center={[-8, 0, -20]} color="#c47af9" orbitRadius={3.8} orbitSpeed={0.19} phase={0.4} floatHeight={1.8} bodyScale={0.80} />
-      <FloatingNPC center={[0, 0, 0]}    color="#c8d8f8" orbitRadius={10}  orbitSpeed={0.10} phase={0}   floatHeight={2.3} bodyScale={0.88} />
-      <FloatingNPC center={[3, 0, 8]}    color="#c8d8f8" orbitRadius={8}   orbitSpeed={0.08} phase={3.1} floatHeight={2.0} bodyScale={0.70} />
+      <FloatingNPC center={[-8, 0, -20]} color="#5fd0e0" orbitRadius={5.0} orbitSpeed={0.23} phase={2.8} floatHeight={2.1} />
+      <FloatingNPC center={[22, 0, -16]} color="#c47af9" orbitRadius={5.0} orbitSpeed={0.21} phase={1.7} floatHeight={2.0} />
     </>
   );
 }

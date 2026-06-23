@@ -8,7 +8,7 @@ import { Suspense, useEffect, useState } from "react";
 import { Bvh } from "@react-three/drei";
 import SmartbookHUD from "./SmartbookHUD";
 import LessonPanel from "./LessonPanel";
-import NewtonsHUD from "./NewtonsHUD";
+import PhysicsHUD from "./PhysicsHUD";
 
 const root = ReactDOM.createRoot(document.querySelector("#root"));
 
@@ -34,7 +34,7 @@ root.render(
   <>
     <Leva collapsed />
     <SmartbookHUD />
-    <NewtonsHUD />
+    <PhysicsHUD />
     <LessonPanel />
     <EcctrlJoystickControls />
     <Canvas

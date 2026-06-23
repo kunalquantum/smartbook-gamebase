@@ -366,16 +366,6 @@ export default function Animals() {
         ]}
       />
       <Dog
-        color="#7a4a28"
-        speed={1.5}
-        phase={2.4}
-        scale={1.1}
-        waypoints={[
-          [10, -1, -4], [14, -1,  1], [12, -1,  7],
-          [ 7, -1,  4], [ 5, -1, -2],
-        ]}
-      />
-      <Dog
         color="#e8d8b8"
         speed={1.9}
         phase={4.8}
@@ -396,19 +386,9 @@ export default function Animals() {
           [ 5, -1, -1], [ 1, -1, -2],
         ]}
       />
-      <Cat
-        color="#9a9a9a"
-        speed={0.9}
-        phase={3.8}
-        scale={0.92}
-        waypoints={[
-          [-7, -1, 5], [-10, -1, 1], [-8, -1, -3],
-          [-4, -1,  0], [-5, -1,  4],
-        ]}
-      />
 
-      {/* ── BIRD FLOCK (8 birds) ── */}
-      {Array.from({ length: 8 }, (_, i) => (
+      {/* ── BIRD FLOCK (4 birds — thinned out for a cleaner lab feel) ── */}
+      {Array.from({ length: 4 }, (_, i) => (
         <Bird
           key={i}
           speed={1 + i * 0.06}
