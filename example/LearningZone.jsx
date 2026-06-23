@@ -6,10 +6,11 @@ import * as THREE from "three";
 import { useSmartbook } from "../src/stores/useSmartbook";
 
 const ZONE_CONFIG = {
-  math:    { color: "#4f9cf9", emoji: "∑",  label: "Math",    sub: "Numbers & Patterns"  },
-  science: { color: "#4ecb71", emoji: "🍎", label: "Newton's World", sub: "Live Physics Lab"  },
-  reading: { color: "#f9a14f", emoji: "📖", label: "Reading",  sub: "Words & Stories"     },
-  history: { color: "#c47af9", emoji: "🏛", label: "History",  sub: "Time & Civilizations"},
+  newton: { color: "#4ecb71", emoji: "🍎", label: "Newton's World", sub: "Live Physics Lab"   },
+  optics: { color: "#4f9cf9", emoji: "🔭", label: "Optics",        sub: "Light & Lenses"      },
+  ohms:   { color: "#f9a14f", emoji: "🔋", label: "Ohm's Law",     sub: "Circuits & Current"  },
+  waves:  { color: "#5fd0e0", emoji: "🌊", label: "Waves",         sub: "Frequency & Sound"   },
+  energy: { color: "#c47af9", emoji: "⚡", label: "Energy",        sub: "Motion & Conservation"},
 };
 
 export default function LearningZone({ zoneId, position }) {

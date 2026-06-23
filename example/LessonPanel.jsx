@@ -1,10 +1,11 @@
 import { useSmartbook } from "../src/stores/useSmartbook";
 
 const ZONE_COLORS = {
-  math:    "#4f9cf9",
-  science: "#4ecb71",
-  reading: "#f9a14f",
-  history: "#c47af9",
+  newton: "#4ecb71",
+  optics: "#4f9cf9",
+  ohms:   "#f9a14f",
+  waves:  "#5fd0e0",
+  energy: "#c47af9",
 };
 
 export default function LessonPanel() {
