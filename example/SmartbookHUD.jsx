@@ -5,7 +5,7 @@ const ALL_ZONES = ["math", "science", "reading", "history"];
 
 const ZONE_META = {
   math:    { color: "#4f9cf9", label: "Math Zone",    emoji: "∑" },
-  science: { color: "#4ecb71", label: "Science Zone",  emoji: "⚗" },
+  science: { color: "#4ecb71", label: "Newton's World",  emoji: "🍎" },
   reading: { color: "#f9a14f", label: "Reading Zone",  emoji: "📖" },
   history: { color: "#c47af9", label: "History Zone",  emoji: "🏛" },
 };

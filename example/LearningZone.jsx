@@ -7,7 +7,7 @@ import { useSmartbook } from "../src/stores/useSmartbook";
 
 const ZONE_CONFIG = {
   math:    { color: "#4f9cf9", emoji: "∑",  label: "Math",    sub: "Numbers & Patterns"  },
-  science: { color: "#4ecb71", emoji: "⚗",  label: "Science",  sub: "Discover & Explore"  },
+  science: { color: "#4ecb71", emoji: "🍎", label: "Newton's World", sub: "Live Physics Lab"  },
   reading: { color: "#f9a14f", emoji: "📖", label: "Reading",  sub: "Words & Stories"     },
   history: { color: "#c47af9", emoji: "🏛", label: "History",  sub: "Time & Civilizations"},
 };
