@@ -3,12 +3,13 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { RigidBody, CuboidCollider, useRapier } from "@react-three/rapier";
 import * as THREE from "three";
 import { useSmartbook } from "../src/stores/useSmartbook";
+import { useGrabFeedback } from "./useLabDrag";
 
 const LAW3_FLASH_MS = 650;
 const FLICK_SENSITIVITY = 0.06;
 
-/** Drag a body across a horizontal plane and fling it on release. */
-function useFlickDrag(bodyRef, camera, planeY, sensitivity = FLICK_SENSITIVITY) {
+/** Drag a body across a horizontal plane and fling it on release, clamped to bounds. */
+function useFlickDrag(bodyRef, camera, planeY, bounds, grab, sensitivity = FLICK_SENSITIVITY) {
   const dragging = useRef(false);
   const last = useRef({ x: 0, y: 0 });
   const total = useRef({ x: 0, y: 0 });
@@ -35,6 +36,7 @@ function useFlickDrag(bodyRef, camera, planeY, sensitivity = FLICK_SENSITIVITY) 
     total.current = { x: 0, y: 0 };
     bodyRef.current.setLinvel({ x: 0, y: 0, z: 0 }, true);
     bodyRef.current.setAngvel({ x: 0, y: 0, z: 0 }, true);
+    grab?.onGrabStart();
   };
 
   const onPointerMove = (e) => {
@@ -46,7 +48,9 @@ function useFlickDrag(bodyRef, camera, planeY, sensitivity = FLICK_SENSITIVITY) 
     const hit = toWorld(e);
     if (hit) {
       const p = bodyRef.current.translation();
-      bodyRef.current.setTranslation({ x: hit.x, y: p.y, z: hit.z }, true);
+      const x = THREE.MathUtils.clamp(hit.x, bounds.minX, bounds.maxX);
+      const z = THREE.MathUtils.clamp(hit.z, bounds.minZ, bounds.maxZ);
+      bodyRef.current.setTranslation({ x, y: p.y, z }, true);
     }
   };
 
@@ -60,13 +64,21 @@ function useFlickDrag(bodyRef, camera, planeY, sensitivity = FLICK_SENSITIVITY) 
         true
       );
     }
+    grab?.onGrabEnd();
   };
 
-  return { onPointerDown, onPointerMove, onPointerUp, onPointerLeave: onPointerUp };
+  return {
+    onPointerDown,
+    onPointerMove,
+    onPointerUp,
+    onPointerLeave: onPointerUp,
+    onPointerOver: grab?.onPointerOver,
+    onPointerOut: grab?.onPointerOut,
+  };
 }
 
 /** Drag a body straight up/down and let it fall when released. */
-function useLiftDrag(bodyRef, minY, maxY) {
+function useLiftDrag(bodyRef, minY, maxY, grab) {
   const dragging = useRef(false);
   const startClientY = useRef(0);
   const startY = useRef(0);
@@ -79,6 +91,7 @@ function useLiftDrag(bodyRef, minY, maxY) {
     startClientY.current = e.clientY;
     startY.current = bodyRef.current.translation().y;
     bodyRef.current.setLinvel({ x: 0, y: 0, z: 0 }, true);
+    grab?.onGrabStart();
   };
 
   const onPointerMove = (e) => {
@@ -95,9 +108,17 @@ function useLiftDrag(bodyRef, minY, maxY) {
     if (!dragging.current) return;
     dragging.current = false;
     e.target.releasePointerCapture?.(e.pointerId);
+    grab?.onGrabEnd();
   };
 
-  return { onPointerDown, onPointerMove, onPointerUp, onPointerLeave: onPointerUp };
+  return {
+    onPointerDown,
+    onPointerMove,
+    onPointerUp,
+    onPointerLeave: onPointerUp,
+    onPointerOver: grab?.onPointerOver,
+    onPointerOut: grab?.onPointerOut,
+  };
 }
 
 export default function NewtonsWorldLab({ position = [0, 0, 0] }) {
@@ -124,10 +145,16 @@ export default function NewtonsWorldLab({ position = [0, 0, 0] }) {
   const prevVelB = useRef(0);
   const law3FlashUntil = useRef(0);
 
-  const dragInertia = useFlickDrag(inertiaBall, camera, oy + 0.4);
-  const dragLaw2 = useLiftDrag(law2Ball, oy + 0.5, oy + 6);
-  const dragA = useFlickDrag(ballA, camera, oy + 0.5);
-  const dragB = useFlickDrag(ballB, camera, oy + 0.5);
+  const grabInertia = useGrabFeedback();
+  const grabLaw2 = useGrabFeedback();
+  const grabA = useGrabFeedback();
+  const grabB = useGrabFeedback();
+
+  const wallBounds = { minX: ox - 6, maxX: ox + 6, minZ: oz - 6, maxZ: oz + 6 };
+  const dragInertia = useFlickDrag(inertiaBall, camera, oy + 0.4, wallBounds, grabInertia);
+  const dragLaw2 = useLiftDrag(law2Ball, oy + 0.5, oy + 6, grabLaw2);
+  const dragA = useFlickDrag(ballA, camera, oy + 0.5, wallBounds, grabA);
+  const dragB = useFlickDrag(ballB, camera, oy + 0.5, wallBounds, grabB);
 
   useFrame((state, delta) => {
     if (delta <= 0) return;
@@ -206,9 +233,14 @@ export default function NewtonsWorldLab({ position = [0, 0, 0] }) {
       {/* Law 1 station — flick-drag the apple to set it moving */}
       <group position={[ox - 4, 0, oz - 4]}>
         <RigidBody ref={inertiaBall} colliders="ball" linearDamping={0} angularDamping={0.4} friction={0} restitution={1} gravityScale={1}>
-          <mesh castShadow {...dragInertia}>
+          <mesh castShadow scale={grabInertia.grabbed ? 1.15 : grabInertia.hovered ? 1.08 : 1} {...dragInertia}>
             <sphereGeometry args={[0.4, 24, 24]} />
-            <meshStandardMaterial color="#e0413f" roughness={0.4} />
+            <meshStandardMaterial
+              color="#e0413f"
+              roughness={0.4}
+              emissive="#e0413f"
+              emissiveIntensity={grabInertia.grabbed ? 0.7 : grabInertia.hovered ? 0.35 : 0}
+            />
           </mesh>
         </RigidBody>
       </group>
@@ -216,9 +248,14 @@ export default function NewtonsWorldLab({ position = [0, 0, 0] }) {
       {/* Law 2 station — lift and release the ball to feel F = m*a */}
       <group>
         <RigidBody ref={law2Ball} colliders="ball" position={[ox, oy + 0.5, oz - 3]} linearDamping={0} friction={0.3} restitution={0.2} gravityScale={1}>
-          <mesh castShadow {...dragLaw2}>
+          <mesh castShadow scale={grabLaw2.grabbed ? 1.15 : grabLaw2.hovered ? 1.08 : 1} {...dragLaw2}>
             <sphereGeometry args={[0.45, 24, 24]} />
-            <meshStandardMaterial color="#4f9cf9" roughness={0.4} />
+            <meshStandardMaterial
+              color="#4f9cf9"
+              roughness={0.4}
+              emissive="#4f9cf9"
+              emissiveIntensity={grabLaw2.grabbed ? 0.7 : grabLaw2.hovered ? 0.35 : 0}
+            />
           </mesh>
         </RigidBody>
         <mesh position={[ox, oy - 0.95, oz - 3]} rotation={[-Math.PI / 2, 0, 0]}>
@@ -230,15 +267,25 @@ export default function NewtonsWorldLab({ position = [0, 0, 0] }) {
       {/* Law 3 station — flick either ball into the other to see equal & opposite force */}
       <group>
         <RigidBody ref={ballA} colliders="ball" position={[ox - 4, oy + 0.5, oz + 4]} linearDamping={0} friction={0} restitution={0.9} gravityScale={0}>
-          <mesh castShadow {...dragA}>
+          <mesh castShadow scale={grabA.grabbed ? 1.15 : grabA.hovered ? 1.08 : 1} {...dragA}>
             <sphereGeometry args={[0.35, 24, 24]} />
-            <meshStandardMaterial color="#f9d54f" roughness={0.4} />
+            <meshStandardMaterial
+              color="#f9d54f"
+              roughness={0.4}
+              emissive="#f9d54f"
+              emissiveIntensity={grabA.grabbed ? 0.7 : grabA.hovered ? 0.35 : 0}
+            />
           </mesh>
         </RigidBody>
         <RigidBody ref={ballB} colliders="ball" position={[ox + 4, oy + 0.5, oz + 4]} linearDamping={0} friction={0} restitution={0.9} gravityScale={0}>
-          <mesh castShadow scale={1.2} {...dragB}>
+          <mesh castShadow scale={(grabB.grabbed ? 1.15 : grabB.hovered ? 1.08 : 1) * 1.2} {...dragB}>
             <sphereGeometry args={[0.35, 24, 24]} />
-            <meshStandardMaterial color="#c47af9" roughness={0.4} />
+            <meshStandardMaterial
+              color="#c47af9"
+              roughness={0.4}
+              emissive="#c47af9"
+              emissiveIntensity={grabB.grabbed ? 0.7 : grabB.hovered ? 0.35 : 0}
+            />
           </mesh>
         </RigidBody>
       </group>

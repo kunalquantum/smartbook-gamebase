@@ -9,6 +9,7 @@ import { Bvh } from "@react-three/drei";
 import SmartbookHUD from "./SmartbookHUD";
 import LessonPanel from "./LessonPanel";
 import PhysicsHUD from "./PhysicsHUD";
+import LabHint from "./LabHint";
 import { useSmartbook } from "../src/stores/useSmartbook";
 
 const root = ReactDOM.createRoot(document.querySelector("#root"));
@@ -37,6 +38,7 @@ root.render(
     <SmartbookHUD />
     <PhysicsHUD />
     <LessonPanel />
+    <LabHint />
     <EcctrlJoystickControls />
     <Canvas
       shadows

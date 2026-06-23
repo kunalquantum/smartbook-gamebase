@@ -2,7 +2,7 @@ import { useRef, useMemo } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { useSmartbook } from "../src/stores/useSmartbook";
-import { useDrag } from "./useLabDrag";
+import { useDrag, useGrabFeedback } from "./useLabDrag";
 
 const MARKER_COUNT = 24;
 const SPEED = 4; // m/s, fixed wave speed
@@ -29,7 +29,9 @@ export default function WavesLab({ position = [0, 0, 0] }) {
     []
   );
 
+  const grab = useGrabFeedback();
   const dragHandlers = useDrag({
+    onStart: grab.onGrabStart,
     onMove: (dx) => {
       frequencyRef.current = THREE.MathUtils.clamp(
         frequencyRef.current + dx * 0.01,
@@ -37,6 +39,7 @@ export default function WavesLab({ position = [0, 0, 0] }) {
         MAX_FREQ
       );
     },
+    onEnd: grab.onGrabEnd,
   });
 
   useFrame((state) => {
@@ -79,9 +82,20 @@ export default function WavesLab({ position = [0, 0, 0] }) {
       </mesh>
 
       {/* Drag handle — sweep horizontally to change frequency by hand */}
-      <mesh ref={handleRef} position={[ox, oy + 0.6, oz]} {...dragHandlers}>
+      <mesh
+        ref={handleRef}
+        position={[ox, oy + 0.6, oz]}
+        scale={grab.grabbed ? 1.3 : grab.hovered ? 1.15 : 1}
+        {...dragHandlers}
+        onPointerOver={grab.onPointerOver}
+        onPointerOut={grab.onPointerOut}
+      >
         <sphereGeometry args={[0.2, 16, 16]} />
-        <meshStandardMaterial color="#ffe066" emissive="#ffe066" emissiveIntensity={0.9} />
+        <meshStandardMaterial
+          color="#ffe066"
+          emissive="#ffe066"
+          emissiveIntensity={grab.hovered || grab.grabbed ? 1.6 : 0.9}
+        />
       </mesh>
     </group>
   );

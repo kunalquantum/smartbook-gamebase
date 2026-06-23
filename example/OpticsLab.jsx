@@ -2,7 +2,7 @@ import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { useSmartbook } from "../src/stores/useSmartbook";
-import { useDrag } from "./useLabDrag";
+import { useDrag, useGrabFeedback } from "./useLabDrag";
 
 const deg = (rad) => (rad * 180) / Math.PI;
 const rad = (d) => (d * Math.PI) / 180;
@@ -27,7 +27,9 @@ export default function OpticsLab({ position = [0, 0, 0] }) {
   const n1 = 1.0; // air
   const n2 = 1.5; // glass
 
+  const grab = useGrabFeedback();
   const dragHandlers = useDrag({
+    onStart: grab.onGrabStart,
     onMove: (dx) => {
       incidentDegRef.current = THREE.MathUtils.clamp(
         incidentDegRef.current + dx * 0.3,
@@ -35,6 +37,7 @@ export default function OpticsLab({ position = [0, 0, 0] }) {
         MAX_DEG
       );
     },
+    onEnd: grab.onGrabEnd,
   });
 
   useFrame(() => {
@@ -111,9 +114,19 @@ export default function OpticsLab({ position = [0, 0, 0] }) {
 
       {/* Drag handle — grab this to sweep the incidence angle by hand */}
       <group position={hitPoint} ref={handleRef}>
-        <mesh position={[0, 1.9, 0]} {...dragHandlers}>
+        <mesh
+          position={[0, 1.9, 0]}
+          scale={grab.grabbed ? 1.3 : grab.hovered ? 1.15 : 1}
+          {...dragHandlers}
+          onPointerOver={grab.onPointerOver}
+          onPointerOut={grab.onPointerOut}
+        >
           <sphereGeometry args={[0.18, 16, 16]} />
-          <meshStandardMaterial color="#ffe066" emissive="#ffe066" emissiveIntensity={0.8} />
+          <meshStandardMaterial
+            color="#ffe066"
+            emissive="#ffe066"
+            emissiveIntensity={grab.hovered || grab.grabbed ? 1.6 : 0.8}
+          />
         </mesh>
       </group>
     </group>

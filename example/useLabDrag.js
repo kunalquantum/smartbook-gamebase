@@ -1,4 +1,37 @@
-import { useRef, useCallback } from "react";
+import { useRef, useCallback, useState } from "react";
+
+/**
+ * Cursor + hover-highlight feedback for a draggable mesh. Spread the
+ * returned handlers alongside drag handlers; use `hovered`/`grabbed` to
+ * drive a glow or scale-up effect so it's obvious what can be grabbed.
+ */
+export function useGrabFeedback() {
+  const [hovered, setHovered] = useState(false);
+  const [grabbed, setGrabbed] = useState(false);
+
+  const onPointerOver = useCallback((e) => {
+    e.stopPropagation();
+    setHovered(true);
+    document.body.style.cursor = "grab";
+  }, []);
+
+  const onPointerOut = useCallback(() => {
+    setHovered(false);
+    document.body.style.cursor = "auto";
+  }, []);
+
+  const onGrabStart = useCallback(() => {
+    setGrabbed(true);
+    document.body.style.cursor = "grabbing";
+  }, []);
+
+  const onGrabEnd = useCallback(() => {
+    setGrabbed(false);
+    document.body.style.cursor = hovered ? "grab" : "auto";
+  }, [hovered]);
+
+  return { hovered, grabbed, onPointerOver, onPointerOut, onGrabStart, onGrabEnd };
+}
 
 /**
  * Generic pointer-drag tracker for lab interactions. Call the returned

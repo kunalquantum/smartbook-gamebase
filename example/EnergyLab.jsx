@@ -3,8 +3,11 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { RigidBody, CuboidCollider, useRapier } from "@react-three/rapier";
 import * as THREE from "three";
 import { useSmartbook } from "../src/stores/useSmartbook";
+import { useGrabFeedback } from "./useLabDrag";
 
 const MASS = 1.5; // kg
+const VALLEY_HALF_WIDTH = 3.6;
+const MAX_LIFT_Y = 4.5;
 
 /**
  * A live energy-conservation demo: a real ball (driven by Rapier, not
@@ -23,14 +26,16 @@ export default function EnergyLab({ position = [0, 0, 0] }) {
   const lowPointY = oy - 0.3;
   const dragging = useRef(false);
   const dragPlaneY = useRef(0);
+  const grab = useGrabFeedback();
 
   const onPointerDown = (e) => {
     if (!ballRef.current) return;
     e.stopPropagation();
     e.target.setPointerCapture?.(e.pointerId);
     dragging.current = true;
-    dragPlaneY.current = ballRef.current.translation().y;
+    dragPlaneY.current = Math.min(ballRef.current.translation().y, MAX_LIFT_Y);
     ballRef.current.setLinvel({ x: 0, y: 0, z: 0 }, true);
+    grab.onGrabStart();
   };
 
   const onPointerMove = (e) => {
@@ -45,7 +50,9 @@ export default function EnergyLab({ position = [0, 0, 0] }) {
     const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -dragPlaneY.current);
     const hit = new THREE.Vector3();
     if (raycaster.ray.intersectPlane(plane, hit)) {
-      ballRef.current.setTranslation({ x: hit.x, y: dragPlaneY.current, z: hit.z }, true);
+      const x = THREE.MathUtils.clamp(hit.x, ox - VALLEY_HALF_WIDTH, ox + VALLEY_HALF_WIDTH);
+      const z = THREE.MathUtils.clamp(hit.z, oz - VALLEY_HALF_WIDTH, oz + VALLEY_HALF_WIDTH);
+      ballRef.current.setTranslation({ x, y: dragPlaneY.current, z }, true);
       ballRef.current.setLinvel({ x: 0, y: 0, z: 0 }, true);
     }
   };
@@ -54,6 +61,7 @@ export default function EnergyLab({ position = [0, 0, 0] }) {
     if (!dragging.current) return;
     dragging.current = false;
     e.target.releasePointerCapture?.(e.pointerId);
+    grab.onGrabEnd();
   };
 
   useFrame(() => {
@@ -106,13 +114,21 @@ export default function EnergyLab({ position = [0, 0, 0] }) {
       >
         <mesh
           castShadow
+          scale={grab.grabbed ? 1.15 : grab.hovered ? 1.08 : 1}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
           onPointerLeave={onPointerUp}
+          onPointerOver={grab.onPointerOver}
+          onPointerOut={grab.onPointerOut}
         >
           <sphereGeometry args={[0.32, 24, 24]} />
-          <meshStandardMaterial color="#c47af9" roughness={0.35} />
+          <meshStandardMaterial
+            color="#c47af9"
+            roughness={0.35}
+            emissive="#c47af9"
+            emissiveIntensity={grab.grabbed ? 0.7 : grab.hovered ? 0.35 : 0}
+          />
         </mesh>
       </RigidBody>
     </group>

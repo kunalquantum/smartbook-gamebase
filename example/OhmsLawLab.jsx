@@ -2,7 +2,7 @@ import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { useSmartbook } from "../src/stores/useSmartbook";
-import { useDrag } from "./useLabDrag";
+import { useDrag, useGrabFeedback } from "./useLabDrag";
 
 const MIN_OHMS = 1;
 const MAX_OHMS = 30;
@@ -21,7 +21,9 @@ export default function OhmsLawLab({ position = [0, 0, 0] }) {
   const resistorRef = useRef(null);
   const resistanceRef = useRef(10);
 
+  const grab = useGrabFeedback();
   const dragHandlers = useDrag({
+    onStart: grab.onGrabStart,
     onMove: (_dx, dy) => {
       resistanceRef.current = THREE.MathUtils.clamp(
         resistanceRef.current + dy * 0.08,
@@ -29,6 +31,7 @@ export default function OhmsLawLab({ position = [0, 0, 0] }) {
         MAX_OHMS
       );
     },
+    onEnd: grab.onGrabEnd,
   });
 
   useFrame(() => {
@@ -60,11 +63,21 @@ export default function OhmsLawLab({ position = [0, 0, 0] }) {
       </mesh>
 
       {/* Resistor (zig-zag) — drag vertically to change resistance */}
-      <group ref={resistorRef} position={[ox, oy + 0.4, oz]} {...dragHandlers}>
+      <group
+        ref={resistorRef}
+        position={[ox, oy + 0.4, oz]}
+        {...dragHandlers}
+        onPointerOver={grab.onPointerOver}
+        onPointerOut={grab.onPointerOut}
+      >
         {[-0.3, -0.1, 0.1, 0.3].map((x, i) => (
           <mesh key={i} position={[x, i % 2 === 0 ? 0.08 : -0.08, 0]} rotation={[0, 0, i % 2 === 0 ? 0.6 : -0.6]}>
             <cylinderGeometry args={[0.04, 0.04, 0.26, 6]} />
-            <meshStandardMaterial color="#caa14f" />
+            <meshStandardMaterial
+              color="#caa14f"
+              emissive="#fff2b0"
+              emissiveIntensity={grab.grabbed ? 0.9 : grab.hovered ? 0.5 : 0}
+            />
           </mesh>
         ))}
         {/* invisible bigger hitbox for easier grabbing */}
