@@ -9,6 +9,7 @@ import { Bvh } from "@react-three/drei";
 import SmartbookHUD from "./SmartbookHUD";
 import LessonPanel from "./LessonPanel";
 import PhysicsHUD from "./PhysicsHUD";
+import { useSmartbook } from "../src/stores/useSmartbook";
 
 const root = ReactDOM.createRoot(document.querySelector("#root"));
 
@@ -45,7 +46,7 @@ root.render(
         far: 1000,
       }}
       onPointerDown={(e) => {
-        if (e.pointerType === 'mouse') {
+        if (e.pointerType === 'mouse' && !useSmartbook.getState().currentZone) {
           e.target.requestPointerLock()
         }
       }}

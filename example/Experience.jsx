@@ -25,6 +25,7 @@ import PostProcessing from "./PostProcessing";
 import { useControls } from "leva";
 import RobotCharacter from "./RobotCharacter";
 import React, { useEffect, useState } from "react";
+import { useSmartbook } from "../src/stores/useSmartbook";
 
 export default function Experience() {
   const [pausedPhysics, setPausedPhysics] = useState(true);
@@ -32,6 +33,8 @@ export default function Experience() {
     const timeout = setTimeout(() => setPausedPhysics(false), 1200);
     return () => clearTimeout(timeout);
   }, []);
+
+  const inLab = useSmartbook((s) => !!s.currentZone);
 
   const { physics, disableControl, disableFollowCam } = useControls("World Settings", {
     physics: false,
@@ -74,8 +77,8 @@ export default function Experience() {
             autoBalanceDampingC={0.04}
             autoBalanceSpringOnY={0.7}
             autoBalanceDampingOnY={0.05}
-            disableControl={disableControl}
-            disableFollowCam={disableFollowCam}
+            disableControl={disableControl || inLab}
+            disableFollowCam={disableFollowCam || inLab}
           >
             <RobotCharacter />
           </Ecctrl>

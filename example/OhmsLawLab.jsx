@@ -1,36 +1,47 @@
 import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
+import * as THREE from "three";
 import { useSmartbook } from "../src/stores/useSmartbook";
+import { useDrag } from "./useLabDrag";
 
-const RESISTOR_PRESETS = [2, 5, 10, 20]; // ohms
-const SWAP_EVERY = 3.5; // seconds
+const MIN_OHMS = 1;
+const MAX_OHMS = 30;
 const VOLTAGE = 9; // V, fixed battery
 
 /**
- * A live circuit demo: a fixed 9V battery drives current through a
- * swappable resistor into an LED. Current = V / R is recalculated every
- * frame as the resistance changes, and the LED's actual emissive
- * brightness is driven by that live current value.
+ * A live circuit demo: drag the resistor up/down to change its resistance
+ * by hand. Current = V / R is recalculated every frame as the resistance
+ * changes, and the LED's actual emissive brightness is driven by that live
+ * current value.
  */
 export default function OhmsLawLab({ position = [0, 0, 0] }) {
   const [ox, oy, oz] = position;
   const setOhmsState = useSmartbook((s) => s.setOhmsState);
   const ledRef = useRef(null);
-  const timer = useRef(0);
-  const presetIdx = useRef(0);
+  const resistorRef = useRef(null);
+  const resistanceRef = useRef(10);
 
-  useFrame((state, delta) => {
-    timer.current += delta;
-    if (timer.current > SWAP_EVERY) {
-      timer.current = 0;
-      presetIdx.current = (presetIdx.current + 1) % RESISTOR_PRESETS.length;
-    }
-    const resistance = RESISTOR_PRESETS[presetIdx.current];
+  const dragHandlers = useDrag({
+    onMove: (_dx, dy) => {
+      resistanceRef.current = THREE.MathUtils.clamp(
+        resistanceRef.current + dy * 0.08,
+        MIN_OHMS,
+        MAX_OHMS
+      );
+    },
+  });
+
+  useFrame(() => {
+    const resistance = resistanceRef.current;
     const current = VOLTAGE / resistance;
 
     if (ledRef.current) {
-      const maxCurrent = VOLTAGE / RESISTOR_PRESETS[0];
+      const maxCurrent = VOLTAGE / MIN_OHMS;
       ledRef.current.material.emissiveIntensity = 0.4 + (current / maxCurrent) * 4;
+    }
+    if (resistorRef.current) {
+      const scale = 0.6 + (resistance / MAX_OHMS) * 0.8;
+      resistorRef.current.scale.y = scale;
     }
 
     setOhmsState({ voltage: VOLTAGE, resistance, current });
@@ -48,14 +59,18 @@ export default function OhmsLawLab({ position = [0, 0, 0] }) {
         <meshStandardMaterial color="#c0392b" />
       </mesh>
 
-      {/* Resistor (zig-zag) */}
-      <group position={[ox, oy + 0.4, oz]}>
+      {/* Resistor (zig-zag) — drag vertically to change resistance */}
+      <group ref={resistorRef} position={[ox, oy + 0.4, oz]} {...dragHandlers}>
         {[-0.3, -0.1, 0.1, 0.3].map((x, i) => (
           <mesh key={i} position={[x, i % 2 === 0 ? 0.08 : -0.08, 0]} rotation={[0, 0, i % 2 === 0 ? 0.6 : -0.6]}>
             <cylinderGeometry args={[0.04, 0.04, 0.26, 6]} />
             <meshStandardMaterial color="#caa14f" />
           </mesh>
         ))}
+        {/* invisible bigger hitbox for easier grabbing */}
+        <mesh visible={false}>
+          <boxGeometry args={[0.9, 0.5, 0.5]} />
+        </mesh>
       </group>
 
       {/* LED bulb — brightness driven by live current */}

@@ -165,7 +165,10 @@ export const useSmartbook = create(
     waves: DEFAULT_WAVES_STATE,
     energy: DEFAULT_ENERGY_STATE,
 
-    enterZone: (zone) => set({ currentZone: zone }),
+    enterZone: (zone) => {
+      document.exitPointerLock?.();
+      set({ currentZone: zone });
+    },
 
     exitZone: (zone) =>
       set((state) =>

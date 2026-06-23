@@ -2,15 +2,17 @@ import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { useSmartbook } from "../src/stores/useSmartbook";
+import { useDrag } from "./useLabDrag";
 
 const deg = (rad) => (rad * 180) / Math.PI;
 const rad = (d) => (d * Math.PI) / 180;
+const MIN_DEG = 5;
+const MAX_DEG = 80;
 
 /**
- * A live optics demo: an oscillating beam of light hits a glass surface.
- * The incidence angle sweeps back and forth; the reflected angle always
- * mirrors it (Law of Reflection) and the refracted angle is computed live
- * from Snell's Law (n1 sin theta1 = n2 sin theta2) — real trig, every frame.
+ * A live optics demo: drag the yellow handle to sweep the incidence angle
+ * by hand. The reflected angle always mirrors it (Law of Reflection) and
+ * the refracted angle is computed live from Snell's Law every frame.
  */
 export default function OpticsLab({ position = [0, 0, 0] }) {
   const [ox, oy, oz] = position;
@@ -19,13 +21,24 @@ export default function OpticsLab({ position = [0, 0, 0] }) {
   const incidentRef = useRef(null);
   const reflectedRef = useRef(null);
   const refractedRef = useRef(null);
+  const handleRef = useRef(null);
+  const incidentDegRef = useRef(30);
 
   const n1 = 1.0; // air
   const n2 = 1.5; // glass
 
-  useFrame((state) => {
-    const t = state.clock.elapsedTime;
-    const incidentDeg = 30 + 22 * Math.sin(t * 0.25);
+  const dragHandlers = useDrag({
+    onMove: (dx) => {
+      incidentDegRef.current = THREE.MathUtils.clamp(
+        incidentDegRef.current + dx * 0.3,
+        MIN_DEG,
+        MAX_DEG
+      );
+    },
+  });
+
+  useFrame(() => {
+    const incidentDeg = incidentDegRef.current;
     const incidentRad = rad(incidentDeg);
 
     const sinRefracted = (n1 / n2) * Math.sin(incidentRad);
@@ -35,6 +48,7 @@ export default function OpticsLab({ position = [0, 0, 0] }) {
     if (incidentRef.current) incidentRef.current.rotation.z = incidentRad;
     if (reflectedRef.current) reflectedRef.current.rotation.z = -incidentRad;
     if (refractedRef.current) refractedRef.current.rotation.z = Math.PI + refractedRad;
+    if (handleRef.current) handleRef.current.rotation.z = incidentRad;
 
     setOpticsState({
       n1,
@@ -92,6 +106,14 @@ export default function OpticsLab({ position = [0, 0, 0] }) {
         <mesh position={[0, 1, 0]}>
           <cylinderGeometry args={[0.02, 0.02, 2, 6]} />
           <meshStandardMaterial color="#4fd1ff" emissive="#4fd1ff" emissiveIntensity={1.2} />
+        </mesh>
+      </group>
+
+      {/* Drag handle — grab this to sweep the incidence angle by hand */}
+      <group position={hitPoint} ref={handleRef}>
+        <mesh position={[0, 1.9, 0]} {...dragHandlers}>
+          <sphereGeometry args={[0.18, 16, 16]} />
+          <meshStandardMaterial color="#ffe066" emissive="#ffe066" emissiveIntensity={0.8} />
         </mesh>
       </group>
     </group>

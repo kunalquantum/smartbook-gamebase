@@ -1,6 +1,7 @@
 import { useRef } from "react";
-import { useFrame } from "@react-three/fiber";
+import { useFrame, useThree } from "@react-three/fiber";
 import { RigidBody, CuboidCollider, useRapier } from "@react-three/rapier";
+import * as THREE from "three";
 import { useSmartbook } from "../src/stores/useSmartbook";
 
 const MASS = 1.5; // kg
@@ -10,14 +11,50 @@ const MASS = 1.5; // kg
  * scripted) rolls back and forth in a shallow valley. Every frame we read
  * its actual height and speed off the rigid body and compute
  * PE = m*g*h and KE = 0.5*m*v^2 — watch them trade off while their sum
- * stays roughly constant.
+ * stays roughly constant. Grab the ball with the mouse to lift it and
+ * release to let gravity pull it back down.
  */
 export default function EnergyLab({ position = [0, 0, 0] }) {
   const [ox, oy, oz] = position;
   const { world } = useRapier();
+  const { camera } = useThree();
   const setEnergyState = useSmartbook((s) => s.setEnergyState);
   const ballRef = useRef(null);
   const lowPointY = oy - 0.3;
+  const dragging = useRef(false);
+  const dragPlaneY = useRef(0);
+
+  const onPointerDown = (e) => {
+    if (!ballRef.current) return;
+    e.stopPropagation();
+    e.target.setPointerCapture?.(e.pointerId);
+    dragging.current = true;
+    dragPlaneY.current = ballRef.current.translation().y;
+    ballRef.current.setLinvel({ x: 0, y: 0, z: 0 }, true);
+  };
+
+  const onPointerMove = (e) => {
+    if (!dragging.current || !ballRef.current) return;
+    e.stopPropagation();
+    const ndc = new THREE.Vector2(
+      (e.clientX / window.innerWidth) * 2 - 1,
+      -(e.clientY / window.innerHeight) * 2 + 1
+    );
+    const raycaster = new THREE.Raycaster();
+    raycaster.setFromCamera(ndc, camera);
+    const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -dragPlaneY.current);
+    const hit = new THREE.Vector3();
+    if (raycaster.ray.intersectPlane(plane, hit)) {
+      ballRef.current.setTranslation({ x: hit.x, y: dragPlaneY.current, z: hit.z }, true);
+      ballRef.current.setLinvel({ x: 0, y: 0, z: 0 }, true);
+    }
+  };
+
+  const onPointerUp = (e) => {
+    if (!dragging.current) return;
+    dragging.current = false;
+    e.target.releasePointerCapture?.(e.pointerId);
+  };
 
   useFrame(() => {
     if (!ballRef.current) return;
@@ -67,7 +104,13 @@ export default function EnergyLab({ position = [0, 0, 0] }) {
         restitution={0.35}
         linearDamping={0.02}
       >
-        <mesh castShadow>
+        <mesh
+          castShadow
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onPointerLeave={onPointerUp}
+        >
           <sphereGeometry args={[0.32, 24, 24]} />
           <meshStandardMaterial color="#c47af9" roughness={0.35} />
         </mesh>

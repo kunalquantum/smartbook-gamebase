@@ -1,78 +1,159 @@
 import { useRef } from "react";
-import { useFrame } from "@react-three/fiber";
+import { useFrame, useThree } from "@react-three/fiber";
 import { RigidBody, CuboidCollider, useRapier } from "@react-three/rapier";
 import * as THREE from "three";
 import { useSmartbook } from "../src/stores/useSmartbook";
 
 const LAW3_FLASH_MS = 650;
+const FLICK_SENSITIVITY = 0.06;
 
-/**
- * A real, live physics sandbox (built on the same Rapier world the character
- * walks on) that demonstrates Newton's three laws with actual numbers —
- * nothing here is scripted/faked, every value pushed to the Smartbook store
- * is read straight off the rigid bodies each frame.
- */
+/** Drag a body across a horizontal plane and fling it on release. */
+function useFlickDrag(bodyRef, camera, planeY, sensitivity = FLICK_SENSITIVITY) {
+  const dragging = useRef(false);
+  const last = useRef({ x: 0, y: 0 });
+  const total = useRef({ x: 0, y: 0 });
+
+  const toWorld = (e) => {
+    const ndc = new THREE.Vector2(
+      (e.clientX / window.innerWidth) * 2 - 1,
+      -(e.clientY / window.innerHeight) * 2 + 1
+    );
+    const raycaster = new THREE.Raycaster();
+    raycaster.setFromCamera(ndc, camera);
+    const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -planeY);
+    const hit = new THREE.Vector3();
+    raycaster.ray.intersectPlane(plane, hit);
+    return hit;
+  };
+
+  const onPointerDown = (e) => {
+    if (!bodyRef.current) return;
+    e.stopPropagation();
+    e.target.setPointerCapture?.(e.pointerId);
+    dragging.current = true;
+    last.current = { x: e.clientX, y: e.clientY };
+    total.current = { x: 0, y: 0 };
+    bodyRef.current.setLinvel({ x: 0, y: 0, z: 0 }, true);
+    bodyRef.current.setAngvel({ x: 0, y: 0, z: 0 }, true);
+  };
+
+  const onPointerMove = (e) => {
+    if (!dragging.current || !bodyRef.current) return;
+    e.stopPropagation();
+    total.current.x += e.clientX - last.current.x;
+    total.current.y += e.clientY - last.current.y;
+    last.current = { x: e.clientX, y: e.clientY };
+    const hit = toWorld(e);
+    if (hit) {
+      const p = bodyRef.current.translation();
+      bodyRef.current.setTranslation({ x: hit.x, y: p.y, z: hit.z }, true);
+    }
+  };
+
+  const onPointerUp = (e) => {
+    if (!dragging.current) return;
+    dragging.current = false;
+    e.target.releasePointerCapture?.(e.pointerId);
+    if (bodyRef.current) {
+      bodyRef.current.setLinvel(
+        { x: total.current.x * sensitivity, y: 0, z: total.current.y * sensitivity },
+        true
+      );
+    }
+  };
+
+  return { onPointerDown, onPointerMove, onPointerUp, onPointerLeave: onPointerUp };
+}
+
+/** Drag a body straight up/down and let it fall when released. */
+function useLiftDrag(bodyRef, minY, maxY) {
+  const dragging = useRef(false);
+  const startClientY = useRef(0);
+  const startY = useRef(0);
+
+  const onPointerDown = (e) => {
+    if (!bodyRef.current) return;
+    e.stopPropagation();
+    e.target.setPointerCapture?.(e.pointerId);
+    dragging.current = true;
+    startClientY.current = e.clientY;
+    startY.current = bodyRef.current.translation().y;
+    bodyRef.current.setLinvel({ x: 0, y: 0, z: 0 }, true);
+  };
+
+  const onPointerMove = (e) => {
+    if (!dragging.current || !bodyRef.current) return;
+    e.stopPropagation();
+    const dy = -(e.clientY - startClientY.current) * 0.03;
+    const p = bodyRef.current.translation();
+    const newY = THREE.MathUtils.clamp(startY.current + dy, minY, maxY);
+    bodyRef.current.setTranslation({ x: p.x, y: newY, z: p.z }, true);
+    bodyRef.current.setLinvel({ x: 0, y: 0, z: 0 }, true);
+  };
+
+  const onPointerUp = (e) => {
+    if (!dragging.current) return;
+    dragging.current = false;
+    e.target.releasePointerCapture?.(e.pointerId);
+  };
+
+  return { onPointerDown, onPointerMove, onPointerUp, onPointerLeave: onPointerUp };
+}
+
 export default function NewtonsWorldLab({ position = [0, 0, 0] }) {
-  const { rapier, world } = useRapier();
+  const { world } = useRapier();
+  const { camera } = useThree();
   const setNewtonState = useSmartbook((s) => s.setNewtonState);
 
   const [ox, oy, oz] = position;
 
-  // ── Law 1: Inertia ball — zero friction/damping, only changes velocity on collision ──
+  // Law 1: Inertia ball — flick-drag it to feel it keep moving until friction/walls act
   const inertiaBall = useRef(null);
 
-  // ── Law 2: F = m·a — ball repeatedly dropped, mass is fixed & known ──
+  // Law 2: F = m·a — lift the ball and drop it, watch F = m*a measured live
   const law2Ball = useRef(null);
   const law2Mass = 2; // kg
   const prevLaw2Vel = useRef(0);
-  const law2Timer = useRef(0);
 
-  // ── Law 3: equal & opposite reaction — two different-mass balls launched at each other ──
+  // Law 3: equal & opposite reaction — flick the two balls into each other
   const ballA = useRef(null);
   const ballB = useRef(null);
   const massA = 1;
   const massB = 2.4;
   const prevVelA = useRef(0);
   const prevVelB = useRef(0);
-  const law3Timer = useRef(0);
   const law3FlashUntil = useRef(0);
+
+  const dragInertia = useFlickDrag(inertiaBall, camera, oy + 0.4);
+  const dragLaw2 = useLiftDrag(law2Ball, oy + 0.5, oy + 6);
+  const dragA = useFlickDrag(ballA, camera, oy + 0.5);
+  const dragB = useFlickDrag(ballB, camera, oy + 0.5);
 
   useFrame((state, delta) => {
     if (delta <= 0) return;
     const t = state.clock.elapsedTime;
-
-    // gravity magnitude straight from the live Rapier world
     const g = Math.abs(world.gravity.y);
 
-    // ── Law 1 readout ──
+    // Law 1 readout
     let velocity = 0;
     if (inertiaBall.current) {
       const v = inertiaBall.current.linvel();
       velocity = Math.hypot(v.x, v.z);
     }
 
-    // ── Law 2: drop the ball every 3s, measure acceleration & force live ──
+    // Law 2: measure live acceleration & force as the lifted ball falls
     let force2 = law2Mass * g;
     let accel2 = g;
     if (law2Ball.current) {
       const v = law2Ball.current.linvel();
       const speed = Math.abs(v.y);
       accel2 = Math.max(0, (speed - prevLaw2Vel.current) / delta);
-      // While in free fall, a ≈ g; smooth toward measured value but keep it sane
       if (accel2 < 0.01 || accel2 > g * 3) accel2 = g;
       force2 = law2Mass * accel2;
       prevLaw2Vel.current = speed;
-
-      law2Timer.current += delta;
-      if (law2Timer.current > 3) {
-        law2Timer.current = 0;
-        law2Ball.current.setTranslation({ x: ox, y: oy + 5, z: oz - 3 }, true);
-        law2Ball.current.setLinvel({ x: 0, y: 0, z: 0 }, true);
-        prevLaw2Vel.current = 0;
-      }
     }
 
-    // ── Law 3: launch the two balls at each other every 4s, detect the impulse ──
+    // Law 3: detect impulse exchange whenever the two balls actually collide
     let forceA = 0;
     let forceB = 0;
     let law3Active = t < law3FlashUntil.current;
@@ -82,7 +163,6 @@ export default function NewtonsWorldLab({ position = [0, 0, 0] }) {
       const dvA = va - prevVelA.current;
       const dvB = vb - prevVelB.current;
 
-      // A real collision shows up as a sudden, large, opposite-signed velocity change
       if (Math.abs(dvA) > 0.4 && Math.abs(dvB) > 0.4 && Math.sign(dvA) !== Math.sign(dvB)) {
         forceA = (massA * dvA) / delta;
         forceB = (massB * dvB) / delta;
@@ -91,17 +171,6 @@ export default function NewtonsWorldLab({ position = [0, 0, 0] }) {
       }
       prevVelA.current = va;
       prevVelB.current = vb;
-
-      law3Timer.current += delta;
-      if (law3Timer.current > 4) {
-        law3Timer.current = 0;
-        ballA.current.setTranslation({ x: ox - 4, y: oy + 0.5, z: oz + 4 }, true);
-        ballB.current.setTranslation({ x: ox + 4, y: oy + 0.5, z: oz + 4 }, true);
-        ballA.current.setLinvel({ x: 3, y: 0, z: 0 }, true);
-        ballB.current.setLinvel({ x: -3 * (massA / massB), y: 0, z: 0 }, true);
-        prevVelA.current = 3;
-        prevVelB.current = -3 * (massA / massB);
-      }
     }
 
     setNewtonState({
@@ -120,13 +189,13 @@ export default function NewtonsWorldLab({ position = [0, 0, 0] }) {
 
   return (
     <group>
-      {/* Lab floor patch (purely visual cue, sits on the real ground) */}
+      {/* Lab floor patch */}
       <mesh position={[ox, oy - 0.99, oz]} rotation={[-Math.PI / 2, 0, 0]}>
         <circleGeometry args={[6.5, 48]} />
         <meshStandardMaterial color="#1c2a22" transparent opacity={0.35} />
       </mesh>
 
-      {/* Invisible walls so balls bounce around the lab instead of rolling off */}
+      {/* Invisible walls */}
       <RigidBody type="fixed" restitution={1} friction={0}>
         <CuboidCollider args={[0.2, 2, 6.5]} position={[ox - 6.5, oy + 1, oz]} />
         <CuboidCollider args={[0.2, 2, 6.5]} position={[ox + 6.5, oy + 1, oz]} />
@@ -134,73 +203,40 @@ export default function NewtonsWorldLab({ position = [0, 0, 0] }) {
         <CuboidCollider args={[6.5, 2, 0.2]} position={[ox, oy + 1, oz + 6.5]} />
       </RigidBody>
 
-      {/* ── Law 1 station: the "apple" — push it, it keeps going at constant velocity ── */}
+      {/* Law 1 station — flick-drag the apple to set it moving */}
       <group position={[ox - 4, 0, oz - 4]}>
-        <RigidBody
-          ref={inertiaBall}
-          colliders="ball"
-          linearDamping={0}
-          angularDamping={0.4}
-          friction={0}
-          restitution={1}
-          gravityScale={1}
-        >
-          <mesh castShadow>
+        <RigidBody ref={inertiaBall} colliders="ball" linearDamping={0} angularDamping={0.4} friction={0} restitution={1} gravityScale={1}>
+          <mesh castShadow {...dragInertia}>
             <sphereGeometry args={[0.4, 24, 24]} />
             <meshStandardMaterial color="#e0413f" roughness={0.4} />
           </mesh>
         </RigidBody>
       </group>
 
-      {/* ── Law 2 station: ball of known mass, dropped on a loop ── */}
+      {/* Law 2 station — lift and release the ball to feel F = m*a */}
       <group>
-        <RigidBody
-          ref={law2Ball}
-          colliders="ball"
-          position={[ox, oy + 5, oz - 3]}
-          linearDamping={0}
-          friction={0.3}
-          restitution={0.2}
-          gravityScale={1}
-        >
-          <mesh castShadow>
+        <RigidBody ref={law2Ball} colliders="ball" position={[ox, oy + 0.5, oz - 3]} linearDamping={0} friction={0.3} restitution={0.2} gravityScale={1}>
+          <mesh castShadow {...dragLaw2}>
             <sphereGeometry args={[0.45, 24, 24]} />
             <meshStandardMaterial color="#4f9cf9" roughness={0.4} />
           </mesh>
         </RigidBody>
-        {/* drop-zone marker */}
         <mesh position={[ox, oy - 0.95, oz - 3]} rotation={[-Math.PI / 2, 0, 0]}>
           <ringGeometry args={[0.5, 0.65, 32]} />
           <meshBasicMaterial color="#4f9cf9" transparent opacity={0.6} side={THREE.DoubleSide} />
         </mesh>
       </group>
 
-      {/* ── Law 3 station: two balls launched into each other ── */}
+      {/* Law 3 station — flick either ball into the other to see equal & opposite force */}
       <group>
-        <RigidBody
-          ref={ballA}
-          colliders="ball"
-          position={[ox - 4, oy + 0.5, oz + 4]}
-          linearDamping={0}
-          friction={0}
-          restitution={0.9}
-          gravityScale={0}
-        >
-          <mesh castShadow>
+        <RigidBody ref={ballA} colliders="ball" position={[ox - 4, oy + 0.5, oz + 4]} linearDamping={0} friction={0} restitution={0.9} gravityScale={0}>
+          <mesh castShadow {...dragA}>
             <sphereGeometry args={[0.35, 24, 24]} />
             <meshStandardMaterial color="#f9d54f" roughness={0.4} />
           </mesh>
         </RigidBody>
-        <RigidBody
-          ref={ballB}
-          colliders="ball"
-          position={[ox + 4, oy + 0.5, oz + 4]}
-          linearDamping={0}
-          friction={0}
-          restitution={0.9}
-          gravityScale={0}
-        >
-          <mesh castShadow scale={1.2}>
+        <RigidBody ref={ballB} colliders="ball" position={[ox + 4, oy + 0.5, oz + 4]} linearDamping={0} friction={0} restitution={0.9} gravityScale={0}>
+          <mesh castShadow scale={1.2} {...dragB}>
             <sphereGeometry args={[0.35, 24, 24]} />
             <meshStandardMaterial color="#c47af9" roughness={0.4} />
           </mesh>
