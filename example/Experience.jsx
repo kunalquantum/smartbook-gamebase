@@ -9,6 +9,7 @@ import RoughPlane from "./RoughPlane";
 import FloatingPlatform from "./FloatingPlatform";
 import DynamicPlatforms from "./DynamicPlatforms";
 import LearningZone from "./LearningZone";
+import NewtonsWorldLab from "./NewtonsWorldLab";
 import SmartbookBridge from "./SmartbookBridge";
 import FloatingNPC from "./FloatingNPC";
 import WorldDecorations from "./WorldDecorations";
@@ -86,6 +87,7 @@ export default function Experience() {
         {/* ── Learning Zones ── */}
         <LearningZone zoneId="math"    position={[19,  -1,  6]} />
         <LearningZone zoneId="science" position={[-17, -1, -9]} />
+        <NewtonsWorldLab position={[-17, -1, -9]} />
         <LearningZone zoneId="reading" position={[5,   -1, 21]} />
         <LearningZone zoneId="history" position={[-8,  -1,-20]} />
       </Physics>
